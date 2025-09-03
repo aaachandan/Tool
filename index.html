@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ray Services — GSB Workshop Tool (Complete Costing)</title>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root{ --accent-1:#0066ff; --accent-2:#00c2a8; --muted:#64748b; --card:#fff; --bg:#f3f7fb; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#0f172a}
+    header{background:linear-gradient(90deg,var(--accent-1),#00a0ff);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand-logo{width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+    header h1{margin:0;font-size:20px}
+    header .addr{font-size:13px;opacity:0.95}
+    .container{max-width:1150px;margin:20px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+    .field{margin-bottom:12px}
+    label{display:block;font-weight:700;margin-bottom:6px;font-size:13px}
+    input[type="number"], input[type="text"], select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e6eef6;font-size:14px}
+    .row{display:flex;gap:10px}
+    .row .half{flex:1}
+    .actions{display:flex;gap:10px;margin-top:8px}
+    button.primary{background:var(--accent-1);color:white;border:0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
+    button.ghost{background:transparent;border:1px solid #e6eef6;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .muted{color:var(--muted);font-size:13px}
+    .result-box{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fbfdff,#f1fbff);border:1px solid #e1f3ff;font-size:15px}
+    .stat{background:white;padding:8px;border-radius:8px;min-width:120px;box-shadow:0 6px 18px rgba(2,6,23,0.03)}
+    canvas#draw{width:100%;height:auto;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:linear-gradient(180deg,#ffffff,#fbfdff)}
+    .table{margin-top:12px;border-radius:8px;background:white;padding:12px;border:1px solid #eef6fb}
+    .table-row{display:flex;justify-content:space-between;padding:8px 6px;border-bottom:1px dashed #f1f7fb}
+    .table-row:last-child{border-bottom:0}
+    footer.note{text-align:center;color:var(--muted);margin-top:12px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-logo">RS</div>
+    <div>
+      <h1>Ray Services Workshop Tool</h1>
+      <div class="addr">Ward 60, Ayodhya Nagar, Raipur • 📞 7746969000</div>
+    </div>
+  </div>
+  <div class="muted">Complete GSB Estimator — Tube, Flex, Farri, Frame, Panel, Wire & Labour</div>
+</header>
+
+<div class="container">
+  <div class="grid">
+    <!-- LEFT: Inputs -->
+    <div class="card">
+      <h3 style="margin-top:0">Inputs — Dimensions & Placement</h3>
+
+      <div class="field">
+        <label>Height (ft)</label>
+        <input id="height" type="number" value="6" step="0.1" min="0">
+      </div>
+
+      <div class="field">
+        <label>Width (ft)</label>
+        <input id="width" type="number" value="12" step="0.1" min="0">
+      </div>
+
+      <div class="field row">
+        <div class="half">
+          <label>Placement</label>
+          <select id="placement">
+            <option value="horizontal">Horizontal (rows)</option>
+            <option value="vertical">Vertical (columns)</option>
+          </select>
+        </div>
+        <div class="half">
+          <label>Rows / Columns</label>
+          <input id="rows" type="number" value="1" min="1" step="1">
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #f1f5f9;margin:12px 0">
+
+      <h4 style="margin:6px 0 10px">Material Rates & Qty (आप बदलोगे)</h4>
+
+      <div class="field">
+        <label>Tube Light Rate (₹ per piece)</label>
+        <input id="tubeRate" type="number" value="250" step="1" min="0">
+        <div class="muted">Standard tube length = <b>3.8 ft</b></div>
+      </div>
+
+      <div class="field">
+        <label>Flex Rate (₹ / sq.ft)</label>
+        <input id="flexRate" type="number" value="80" step="1" min="0">
+      </div>
+
+      <div class="field">
+        <label>Outer Farri Rate (₹ / sq.ft) — border 0.6 ft</label>
+        <input id="farriRate" type="number" value="120" step="1" min="0">
+      </div>
+
+      <div class="field">
+        <label>Iron Frame Rate (₹ / sq.ft)</label>
+        <input id="frameRate" type="number" value="150" step="1" min="0">
+      </div>
+
+      <div class="field">
+        <label>Back Steel Panel Rate (₹ / sq.ft)</label>
+        <input id="panelRate" type="number" value="200" step="1" min="0">
+      </div>
+
+      <div class="field row">
+        <div class="half">
+          <label>Copper Wire Qty (m)</label>
+          <input id="wireQty" type="number" value="10" step="0.1" min="0">
+        </div>
+        <div class="half">
+          <label>Copper Wire Rate (₹ / m)</label>
+          <input id="wireRate" type="number" value="15" step="0.1" min="0">
+        </div>
+      </div>
+
+      <div class="field row">
+        <div class="half">
+          <label>Electric Tape Qty (pcs)</label>
+          <input id="tapeQty" type="number" value="2" step="1" min="0">
+        </div>
+        <div class="half">
+          <label>Electric Tape Rate (₹ / pcs)</label>
+          <input id="tapeRate" type="number" value="10" step="1" min="0">
+        </div>
+      </div>
+
+      <div class="field row">
+        <div class="half">
+          <label>GI & Screw (Fixed) ₹</label>
+          <input id="giFixed" type="number" value="300" step="1" min="0">
+        </div>
+        <div class="half">
+          <label>Labour Rate (₹ / sq.ft)</label>
+          <input id="labourRate" type="number" value="10" step="0.1" min="0">
+        </div>
+      </div>
+
+      <!-- NEW: Transport and GST inputs (only added) -->
+      <div class="field row">
+        <div class="half">
+          <label>Transportation Cost (₹)</label>
+          <input id="transportCost" type="number" value="0" step="1" min="0">
+        </div>
+        <div class="half">
+          <label>GST %</label>
+          <input id="gstPercent" type="number" value="18" step="0.1" min="0">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="doCalculate()">🔍 Calculate & Preview</button>
+        <button class="ghost" onclick="resetDefault()">Reset</button>
+      </div>
+
+      <div style="height:8px"></div>
+      <div class="muted">Tip: सभी रेट आप बदल कर final cost देख सकते हैं। Rows/Columns define how many tube rows/cols you want.</div>
+    </div>
+
+    <!-- RIGHT: Preview & Output -->
+    <div class="preview-wrap">
+      <div class="result-box card">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="stat"><small>Total Size</small><div id="outSize">—</div></div>
+          <div class="stat"><small>Area</small><div id="outArea">—</div></div>
+          <div class="stat"><small>Total Tubes</small><div id="outTubes">—</div></div>
+          <div class="stat"><small>Grand Total (₹)</small><div id="outTotal">—</div></div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">Tube len: <b>3.8 ft</b></div>
+          <div style="height:8px"></div>
+          <button class="primary" onclick="downloadPDF()">📥 Download PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <canvas id="draw" width="760" height="420"></canvas>
+      </div>
+
+      <div class="table card" id="costTable">
+        <div style="font-weight:700;margin-bottom:8px">Cost Breakdown</div>
+        <div class="table-row"><div class="muted">Area (sq.ft)</div><div id="tb-area">—</div></div>
+        <div class="table-row"><div class="muted">Tubes (qty)</div><div id="tb-tubes">—</div></div>
+        <div class="table-row"><div class="muted">Tube Cost (₹)</div><div id="tb-tubecost">—</div></div>
+        <div class="table-row"><div class="muted">Flex Cost (₹)</div><div id="tb-flexcost">—</div></div>
+        <div class="table-row"><div class="muted">Outer Farri Area (sq.ft)</div><div id="tb-farriArea">—</div></div>
+        <div class="table-row"><div class="muted">Farri Cost (₹)</div><div id="tb-farricost">—</div></div>
+        <div class="table-row"><div class="muted">Iron Frame Cost (₹)</div><div id="tb-framecost">—</div></div>
+        <div class="table-row"><div class="muted">Back Panel Cost (₹)</div><div id="tb-panelcost">—</div></div>
+        <div class="table-row"><div class="muted">Copper Wire Cost (₹)</div><div id="tb-wirecost">—</div></div>
+        <div class="table-row"><div class="muted">Tape Cost (₹)</div><div id="tb-tapecost">—</div></div>
+        <div class="table-row"><div class="muted">GI & Screw (Fixed)</div><div id="tb-gicost">—</div></div>
+        <div class="table-row"><div class="muted">Labour Cost (₹)</div><div id="tb-labourcost">—</div></div>
+
+        <!-- NEW rows -->
+        <div class="table-row"><div class="muted">Transportation Cost (₹)</div><div id="tb-transportcost">—</div></div>
+        <div class="table-row"><div class="muted">GST (₹)</div><div id="tb-gstamount">—</div></div>
+
+        <div class="table-row" style="font-weight:800;background:linear-gradient(180deg,#fff,#f6fffb)">
+          <div>Total (₹)</div><div id="tb-total">—</div>
+        </div>
+      </div>
+
+      <footer class="note">Ray Services • Ward 60, Ayodhya Nagar, Raipur • 7746969000</footer>
+    </div>
+  </div>
+</div>
+
+<script>
+// constants
+const TUBE_LEN = 3.8; // ft
+const BORDER = 0.6; // ft
+let state = {};
+
+function formatN(n){
+  return (typeof n === 'number') ? n.toLocaleString('en-IN',{maximumFractionDigits:2}) : n;
+}
+
+function doCalculate(){
+  // read inputs
+  const H = parseFloat(document.getElementById('height').value) || 0;
+  const W = parseFloat(document.getElementById('width').value) || 0;
+  const placement = document.getElementById('placement').value;
+  const rows = Math.max(1, parseInt(document.getElementById('rows').value) || 1);
+  const tubeRate = parseFloat(document.getElementById('tubeRate').value) || 0;
+  const flexRate = parseFloat(document.getElementById('flexRate').value) || 0;
+  const farriRate = parseFloat(document.getElementById('farriRate').value) || 0;
+  const frameRate = parseFloat(document.getElementById('frameRate').value) || 0;
+  const panelRate = parseFloat(document.getElementById('panelRate').value) || 0;
+  const wireQty = parseFloat(document.getElementById('wireQty').value) || 0;
+  const wireRate = parseFloat(document.getElementById('wireRate').value) || 0;
+  const tapeQty = parseFloat(document.getElementById('tapeQty').value) || 0;
+  const tapeRate = parseFloat(document.getElementById('tapeRate').value) || 0;
+  const giFixed = parseFloat(document.getElementById('giFixed').value) || 0;
+  const labourRate = parseFloat(document.getElementById('labourRate').value) || 0;
+
+  // NEW inputs
+  const transportCost = parseFloat(document.getElementById('transportCost').value) || 0;
+  const gstPercent = parseFloat(document.getElementById('gstPercent').value) || 0;
+
+  // basic calcs
+  const area = H * W;
+
+  // tubes per line
+  let perLine = (placement === 'horizontal') ? Math.floor(W / TUBE_LEN) : Math.floor(H / TUBE_LEN);
+  perLine = Math.max(0, perLine);
+  const totalTubes = perLine * rows;
+
+  const tubeCost = totalTubes * tubeRate;
+  const flexCost = area * flexRate;
+  const Houter = H + 2 * BORDER;
+  const Wouter = W + 2 * BORDER;
+  const outerArea = Houter * Wouter;
+  const farriArea = Math.max(0, outerArea - area);
+  const farriCost = farriArea * farriRate;
+  const frameCost = area * frameRate;
+  const panelCost = area * panelRate;
+  const wireCost = wireQty * wireRate;
+  const tapeCost = tapeQty * tapeRate;
+  const labourCost = area * labourRate;
+
+  // subtotal before GST
+  const subTotal = tubeCost + flexCost + farriCost + frameCost + panelCost + wireCost + tapeCost + giFixed + labourCost + transportCost;
+
+  const gstAmount = subTotal * (gstPercent / 100);
+  const grandTotal = subTotal + gstAmount;
+
+  // save state
+  state = {
+    H, W, placement, rows, perLine, totalTubes, area,
+    tubeCost, flexCost, farriArea, farriCost, frameCost, panelCost,
+    wireCost, tapeCost, giFixed, labourCost, transportCost,
+    gstPercent, gstAmount, subTotal, grandTotal, Houter, Wouter
+  };
+
+  // update UI
+  document.getElementById('outSize').innerText = `${formatN(H)} ft × ${formatN(W)} ft`;
+  document.getElementById('outArea').innerText = `${formatN(area)} sq.ft`;
+  document.getElementById('outTubes').innerText = `${state.totalTubes} pcs`;
+  document.getElementById('outTotal').innerText = `₹ ${formatN(state.grandTotal)}`;
+
+  document.getElementById('tb-area').innerText = formatN(area);
+  document.getElementById('tb-tubes').innerText = state.totalTubes;
+  document.getElementById('tb-tubecost').innerText = `₹ ${formatN(state.tubeCost)}`;
+  document.getElementById('tb-flexcost').innerText = `₹ ${formatN(state.flexCost)}`;
+  document.getElementById('tb-farriArea').innerText = formatN(state.farriArea);
+  document.getElementById('tb-farricost').innerText = `₹ ${formatN(state.farriCost)}`;
+  document.getElementById('tb-framecost').innerText = `₹ ${formatN(state.frameCost)}`;
+  document.getElementById('tb-panelcost').innerText = `₹ ${formatN(state.panelCost)}`;
+  document.getElementById('tb-wirecost').innerText = `₹ ${formatN(state.wireCost)}`;
+  document.getElementById('tb-tapecost').innerText = `₹ ${formatN(state.tapeCost)}`;
+  document.getElementById('tb-gicost').innerText = `₹ ${formatN(state.giFixed)}`;
+  document.getElementById('tb-labourcost').innerText = `₹ ${formatN(state.labourCost)}`;
+  document.getElementById('tb-transportcost').innerText = `₹ ${formatN(state.transportCost)}`;
+  document.getElementById('tb-gstamount').innerText = `₹ ${formatN(state.gstAmount)}`;
+  document.getElementById('tb-total').innerText = `₹ ${formatN(state.grandTotal)}`;
+
+  drawCanvas();
+}
+
+function resetDefault(){
+  document.getElementById('height').value = 6;
+  document.getElementById('width').value = 12;
+  document.getElementById('placement').value = 'horizontal';
+  document.getElementById('rows').value = 1;
+  document.getElementById('tubeRate').value = 250;
+  document.getElementById('flexRate').value = 80;
+  document.getElementById('farriRate').value = 120;
+  document.getElementById('frameRate').value = 150;
+  document.getElementById('panelRate').value = 200;
+  document.getElementById('wireQty').value = 10;
+  document.getElementById('wireRate').value = 15;
+  document.getElementById('tapeQty').value = 2;
+  document.getElementById('tapeRate').value = 10;
+  document.getElementById('giFixed').value = 300;
+  document.getElementById('labourRate').value = 10;
+  document.getElementById('transportCost').value = 0;
+  document.getElementById('gstPercent').value = 18;
+  doCalculate();
+}
+
+function drawCanvas(){
+  const canvas = document.getElementById('draw');
+  const ctx = canvas.getContext('2d');
+
+  // responsive crisp canvas
+  const clientW = canvas.clientWidth || 760;
+  const clientH = 420;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(clientW * ratio);
+  canvas.height = Math.floor(clientH * ratio);
+  canvas.style.width = clientW + 'px';
+  canvas.style.height = clientH + 'px';
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (!state || !state.area){
+    ctx.fillStyle='#64748b';
+    ctx.font='16px Arial';
+    ctx.fillText('Height और Width डालकर Calculate दबाएँ',20,30);
+    return;
+  }
+
+  // margins and scale
+  const margin = 60;
+  const maxWpx = (clientW) - margin*2;
+  const maxHpx = (clientH) - margin*2;
+  const scale = Math.min(maxWpx / Math.max(state.W,1), maxHpx / Math.max(state.H,1)) || 1;
+  const boxWpx = state.W * scale;
+  const boxHpx = state.H * scale;
+  const boxLeft = (clientW - boxWpx) / 2;
+  const boxTop = (clientH - boxHpx) / 2;
+
+  // outer farri box
+  const outerWpx = state.Wouter * scale;
+  const outerHpx = state.Houter * scale;
+  const outerLeft = (clientW - outerWpx) / 2;
+  const outerTop = (clientH - outerHpx) / 2;
+
+  // draw outer farri lightly
+  ctx.fillStyle = 'rgba(0,198,168,0.06)';
+  roundRect(ctx, outerLeft, outerTop, outerWpx, outerHpx, 8, true, false);
+  ctx.strokeStyle = '#00bfa6';
+  ctx.lineWidth = 2;
+  roundRect(ctx, outerLeft, outerTop, outerWpx, outerHpx, 8, false, true);
+
+  // main box
+  ctx.fillStyle = '#fff';
+  roundRect(ctx, boxLeft, boxTop, boxWpx, boxHpx, 6, true, false);
+  ctx.strokeStyle = '#0066ff';
+  ctx.lineWidth = 3;
+  roundRect(ctx, boxLeft, boxTop, boxWpx, boxHpx, 6, false, true);
+
+  // arrows & labels
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 14px Arial';
+  // vertical arrow (height)
+  drawArrow(ctx, boxLeft - 26, boxTop, boxLeft - 26, boxTop + boxHpx);
+  ctx.textAlign = 'right';
+  ctx.fillText(state.H + ' ft', boxLeft - 30, boxTop + boxHpx/2 + 6);
+
+  // horizontal arrow (width)
+  drawArrow(ctx, boxLeft, boxTop - 26, boxLeft + boxWpx, boxTop - 26);
+  ctx.textAlign = 'center';
+  ctx.fillText(state.W + ' ft', boxLeft + boxWpx/2, boxTop - 30);
+
+  // tubes drawing
+  ctx.strokeStyle = '#ff6b00';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+
+  if (state.perLine <= 0){
+    ctx.fillStyle = '#7b8794';
+    ctx.font = '13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Tube length 3.8 ft se koi tube nahi aa rahi (perLine=0)', clientW/2, clientH - 20);
+  } else {
+    if (state.placement === 'horizontal'){
+      for (let r=1; r<=state.rows; r++){
+        const y = boxTop + (boxHpx/(state.rows+1))*r;
+        for (let t=0; t<state.perLine; t++){
+          const segW = boxWpx / state.perLine;
+          const gap = Math.min(6, segW*0.08);
+          const x1 = boxLeft + t*segW + gap/2;
+          const x2 = boxLeft + (t+1)*segW - gap/2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y);
+          ctx.lineTo(x2, y);
+          ctx.stroke();
+
+          // small index
+          const cx = (x1+x2)/2;
+          ctx.fillStyle = '#7b8794';
+          ctx.font='11px Arial';
+          ctx.textAlign='center';
+          ctx.fillText((t+1).toString(), cx, y - 8);
+        }
+      }
+    } else {
+      for (let c=1; c<=state.rows; c++){
+        const x = boxLeft + (boxWpx/(state.rows+1))*c;
+        for (let t=0; t<state.perLine; t++){
+          const segH = boxHpx / state.perLine;
+          const gap = Math.min(6, segH*0.08);
+          const y1 = boxTop + t*segH + gap/2;
+          const y2 = boxTop + (t+1)*segH - gap/2;
+          ctx.beginPath();
+          ctx.moveTo(x, y1);
+          ctx.lineTo(x, y2);
+          ctx.stroke();
+          const cy = (y1+y2)/2;
+          ctx.fillStyle = '#7b8794';
+          ctx.font='11px Arial';
+          ctx.textAlign='left';
+          ctx.fillText((t+1).toString(), x + 8, cy + 4);
+        }
+      }
+    }
+  }
+
+  // legend
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Outer Farri (0.6 ft border) highlighted', 12, 18);
+  ctx.fillStyle = '#00bfa6';
+  ctx.fillRect(12,22,34,6);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillText('Tube lines (orange)', 12, 42);
+  ctx.fillStyle = '#ff6b00';
+  ctx.fillRect(12,46,34,6);
+}
+
+// helper arrow & rounded rect
+function drawArrow(ctx,x1,y1,x2,y2){
+  ctx.strokeStyle='#0f172a';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x2,y2);
+  ctx.stroke();
+  const head=6;
+  const angle=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2 - head*Math.cos(angle - Math.PI/6), y2 - head*Math.sin(angle - Math.PI/6));
+  ctx.lineTo(x2 - head*Math.cos(angle + Math.PI/6), y2 - head*Math.sin(angle + Math.PI/6));
+  ctx.closePath();
+  ctx.fillStyle='#0f172a';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x1 + head*Math.cos(angle - Math.PI/6), y1 + head*Math.sin(angle - Math.PI/6));
+  ctx.lineTo(x1 + head*Math.cos(angle + Math.PI/6), y1 + head*Math.sin(angle + Math.PI/6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  if(typeof r==='undefined') r=5;
+  if(typeof r==='number') r={tl:r,tr:r,br:r,bl:r};
+  ctx.beginPath();
+  ctx.moveTo(x+r.tl,y);
+  ctx.lineTo(x+w-r.tr,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r.tr);
+  ctx.lineTo(x+w,y+h-r.br);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r.br,y+h);
+  ctx.lineTo(x+r.bl,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r.bl);
+  ctx.lineTo(x,y+r.tl);
+  ctx.quadraticCurveTo(x,y,x+r.tl,y);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
+// PDF generation
+async function downloadPDF(){
+  if (!state || !state.area){
+    alert('पहले Calculate करें');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+
+  // Header (Company)
+  pdf.setFontSize(18);
+  pdf.setTextColor(20,60,120);
+  pdf.text('Ray Services Workshop Tool', 40, 48);
+  pdf.setFontSize(11);
+  pdf.setTextColor(60,60,60);
+  pdf.text('Ward 60, Ayodhya Nagar, Raipur • 7746969000', 40, 66);
+
+  let y = 100;
+  pdf.setFontSize(12);
+  pdf.setTextColor(0,0,0);
+
+  pdf.text(`Size: ${state.H} ft × ${state.W} ft`, 40, y); y+=18;
+  pdf.text(`Area: ${state.area.toFixed(2)} sq.ft`, 40, y); y+=18;
+  pdf.text(`Placement: ${state.placement} • Rows/Cols: ${state.rows}`, 40, y); y+=18;
+  pdf.text(`Tubes per line: ${state.perLine} • Total Tubes: ${state.totalTubes}`, 40, y); y+=18;
+  pdf.text(`Tube Cost: ₹ ${state.tubeCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Flex Cost: ₹ ${state.flexCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Farri Area: ${state.farriArea.toFixed(2)} sq.ft • Farri Cost: ₹ ${state.farriCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Iron Frame Cost: ₹ ${state.frameCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Back Panel Cost: ₹ ${state.panelCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Copper Wire Cost: ₹ ${state.wireCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Tape Cost: ₹ ${state.tapeCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`GI & Screw (Fixed): ₹ ${state.giFixed.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Labour Cost: ₹ ${state.labourCost.toFixed(2)}`, 40, y); y+=18;
+
+  // transport & GST
+  pdf.text(`Transportation Cost: ₹ ${state.transportCost.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`Subtotal (before GST): ₹ ${state.subTotal.toFixed(2)}`, 40, y); y+=18;
+  pdf.text(`GST (${state.gstPercent}%): ₹ ${state.gstAmount.toFixed(2)}`, 40, y); y+=22;
+
+  pdf.setFontSize(14);
+  pdf.setTextColor(10,10,10);
+  pdf.text(`Grand Total: ₹ ${state.grandTotal.toFixed(2)}`, 40, y); y+=18;
+
+  // drawing image using html2canvas of the canvas element
+  const canvas = document.getElementById('draw');
+  const clone = await html2canvas(canvas, {backgroundColor:'#ffffff', scale:2});
+  const imgData = clone.toDataURL('image/png');
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfW = pdf.internal.pageSize.getWidth() - 80;
+  const ratio = imgProps.width / imgProps.height;
+  const imgH = pdfW / ratio;
+  pdf.addImage(imgData, 'PNG', 40, y+10, pdfW, imgH);
+
+  pdf.save('ray_services_gsb_estimate_full.pdf');
+}
+
+// initial
+resetDefault();
+</script>
+</body>
+</html>
